@@ -955,6 +955,76 @@
       </div>
     </div>
 
+
+    <!-- 14. DELETE LESSON MODAL -->
+    <div id="modal-delete-lesson" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-rose-600 font-display"><i class="fa-solid fa-trash-can mr-2"></i> Delete Lesson</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="delete-lesson-hebrew" />
+        <input type="hidden" id="delete-lesson-phonetic" />
+        <p class="text-sm text-slate-600">
+          Are you sure you want to permanently delete the lesson <span id="delete-lesson-name-display" class="font-bold text-slate-900">this lesson</span>? This will also delete all vocabulary cards inside this lesson.
+        </p>
+        <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+          <span>This action is irreversible!</span>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="button" id="confirm-delete-lesson-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Confirm Delete</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 15. DELETE CARD MODAL -->
+    <div id="modal-delete-card" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-rose-600 font-display"><i class="fa-solid fa-trash-can mr-2"></i> Delete Card</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="delete-card-id" />
+        <p class="text-sm text-slate-600">
+          Are you sure you want to permanently delete this content card?
+        </p>
+        <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+          <span>This action is irreversible!</span>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="button" id="confirm-delete-card-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Confirm Delete</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 16. DELETE FONT MODAL -->
+    <div id="modal-delete-font" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-rose-600 font-display"><i class="fa-solid fa-trash-can mr-2"></i> Delete Custom Font</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="delete-font-id" />
+        <p class="text-sm text-slate-600">
+          Are you sure you want to delete the font <span id="delete-font-name-display" class="font-bold text-slate-900">this font</span>? This will revert Hebrew displays back to system font.
+        </p>
+        <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+          <span>This action is irreversible!</span>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="button" id="confirm-delete-font-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Confirm Delete</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Light/Dark Mode Switch (Left) -->
     <div class="fixed bottom-4 left-4 z-45">
       <button id="theme-toggle-btn" class="w-10 h-10 rounded-full bg-white text-slate-700 border border-slate-200 flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer" title="Toggle light/dark mode">

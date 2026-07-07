@@ -846,11 +846,7 @@ async function renderLevel3() {
       e.stopPropagation();
       const heb = (btn as HTMLElement).dataset.hebrew!;
       const pho = (btn as HTMLElement).dataset.phonetic!;
-      if (confirm(`Are you sure you want to delete the lesson "${pho}" (${heb})? All content cards inside will be deleted.`)) {
-        await db.deleteLesson(state.selectedBookId, state.selectedNiveauName, heb, pho);
-        showToast('Lesson deleted successfully');
-        renderLevel3();
-      }
+      openDeleteLessonModal(heb, pho);
     });
   });
 }
@@ -1011,11 +1007,7 @@ async function renderLevel4() {
   document.querySelectorAll('.delete-row-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const id = (btn as HTMLElement).dataset.id!;
-      if (confirm('Delete this card? This cannot be undone.')) {
-        await db.deleteRow(id);
-        showToast('Card deleted successfully');
-        renderLevel4();
-      }
+      openDeleteCardModal(id);
     });
   });
 }
@@ -1265,6 +1257,24 @@ function openDeleteLevelModal(bookId: string, oldName: string) {
   const currentLabel = getRenamedNiveau(bookId, oldName);
   document.getElementById('delete-level-name-display')!.textContent = currentLabel;
   openModal('modal-delete-level');
+}
+
+function openDeleteLessonModal(hebrew: string, phonetic: string) {
+  (document.getElementById('delete-lesson-hebrew') as HTMLInputElement).value = hebrew;
+  (document.getElementById('delete-lesson-phonetic') as HTMLInputElement).value = phonetic;
+  document.getElementById('delete-lesson-name-display')!.textContent = `"${phonetic}" (${hebrew})`;
+  openModal('modal-delete-lesson');
+}
+
+function openDeleteCardModal(id: string) {
+  (document.getElementById('delete-card-id') as HTMLInputElement).value = id;
+  openModal('modal-delete-card');
+}
+
+function openDeleteFontModal(fontId: string, fontName: string) {
+  (document.getElementById('delete-font-id') as HTMLInputElement).value = fontId;
+  document.getElementById('delete-font-name-display')!.textContent = fontName;
+  openModal('modal-delete-font');
 }
 
 // ==========================================
@@ -2563,6 +2573,47 @@ function setupEventListeners() {
     }
   });
 
+  // 14. LESSON DELETE CONFIRM CLICK
+  document.getElementById('confirm-delete-lesson-btn')?.addEventListener('click', async () => {
+    const heb = (document.getElementById('delete-lesson-hebrew') as HTMLInputElement).value;
+    const pho = (document.getElementById('delete-lesson-phonetic') as HTMLInputElement).value;
+    if (state.selectedBookId && state.selectedNiveauName && heb && pho) {
+      await db.deleteLesson(state.selectedBookId, state.selectedNiveauName, heb, pho);
+      closeModal();
+      showToast('Lesson deleted successfully');
+      renderLevel3();
+    }
+  });
+
+  // 15. CARD DELETE CONFIRM CLICK
+  document.getElementById('confirm-delete-card-btn')?.addEventListener('click', async () => {
+    const id = (document.getElementById('delete-card-id') as HTMLInputElement).value;
+    if (id) {
+      await db.deleteRow(id);
+      closeModal();
+      showToast('Card deleted successfully');
+      renderLevel4();
+    }
+  });
+
+  // 16. FONT DELETE CONFIRM CLICK
+  document.getElementById('confirm-delete-font-btn')?.addEventListener('click', async () => {
+    const fontId = (document.getElementById('delete-font-id') as HTMLInputElement).value;
+    if (fontId) {
+      const fonts = await db.getFonts();
+      const font = fonts.find(f => f.id === fontId);
+      await db.deleteFont(fontId);
+      if (font && state.preferences.selectedHebrewFont === font.name) {
+        state.preferences.selectedHebrewFont = 'default';
+        savePreferences();
+      }
+      closeModal();
+      showToast('Font removed successfully');
+      await applyCustomFonts();
+      renderFontsList();
+    }
+  });
+
   // Apply column header mapping form
   const mappingForm = document.getElementById('mapping-form') as HTMLFormElement;
   mappingForm.addEventListener('submit', (e) => {
@@ -2797,16 +2848,7 @@ async function renderFontsList() {
     });
 
     row.querySelector('.delete-font-btn')?.addEventListener('click', async () => {
-      if (confirm(`Delete the font "${font.name}"? This will revert Hebrew displays back to system font.`)) {
-        await db.deleteFont(font.id);
-        if (state.preferences.selectedHebrewFont === font.name) {
-          state.preferences.selectedHebrewFont = 'default';
-          savePreferences();
-        }
-        showToast('Font removed successfully');
-        await applyCustomFonts();
-        renderFontsList();
-      }
+      openDeleteFontModal(font.id, font.name);
     });
 
     container.appendChild(row);
