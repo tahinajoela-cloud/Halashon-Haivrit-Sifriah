@@ -1847,6 +1847,21 @@ async function startQuizSession() {
   renderQuizQuestion();
 }
 
+function isHebrewText(text: string): boolean {
+  return /[\u0590-\u05FF]/.test(text);
+}
+
+function setQuizElementText(element: HTMLElement, text: string) {
+  element.textContent = text;
+  if (isHebrewText(text)) {
+    element.classList.add('text-hebrew');
+    element.style.direction = 'rtl';
+  } else {
+    element.classList.remove('text-hebrew');
+    element.style.direction = 'ltr';
+  }
+}
+
 function renderQuizQuestion() {
   quizHasAnswered = false;
   
@@ -1866,7 +1881,9 @@ function renderQuizQuestion() {
     document.getElementById('quiz-options-container')!.classList.remove('hidden');
     document.getElementById('quiz-flashcard-controls')!.classList.add('hidden');
 
-    document.getElementById('quiz-question-word')!.textContent = current.promptWord;
+    const qWord = document.getElementById('quiz-question-word')!;
+    setQuizElementText(qWord, current.promptWord);
+
     const sub = document.getElementById('quiz-question-subword')!;
     if (current.phoneticHint) {
       sub.classList.remove('hidden');
@@ -1884,24 +1901,53 @@ function renderQuizQuestion() {
       btn.className = 'w-full text-left p-4 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/10 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer active:scale-98 animate-fade-in text-justify-center';
       btn.textContent = opt;
 
+      const hasHeb = isHebrewText(opt);
+      if (hasHeb) {
+        btn.classList.add('text-hebrew');
+        btn.style.direction = 'rtl';
+      } else {
+        btn.classList.remove('text-hebrew');
+        btn.style.direction = 'ltr';
+      }
+
       btn.addEventListener('click', () => {
         if (quizHasAnswered) return;
         quizHasAnswered = true;
 
         if (opt === current.correctAnswer) {
           btn.className = 'w-full text-left p-4 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-default text-justify-center';
-          btn.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${opt}`;
+          if (hasHeb) {
+            btn.classList.add('text-hebrew');
+            btn.style.direction = 'rtl';
+          } else {
+            btn.style.direction = 'ltr';
+          }
+          btn.innerHTML = `<i class="fa-solid fa-circle-check mx-2"></i> ${opt}`;
           quizScore++;
           showToast('Correct translation!');
         } else {
           btn.className = 'w-full text-left p-4 border-2 border-rose-500 bg-rose-50 text-rose-800 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-default text-justify-center';
-          btn.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> ${opt}`;
+          if (hasHeb) {
+            btn.classList.add('text-hebrew');
+            btn.style.direction = 'rtl';
+          } else {
+            btn.style.direction = 'ltr';
+          }
+          btn.innerHTML = `<i class="fa-solid fa-circle-xmark mx-2"></i> ${opt}`;
           
           // Highlight correct answer button
           const btns = optContainer.querySelectorAll('button');
           btns.forEach(b => {
-            if (b.textContent?.trim() === current.correctAnswer) {
+            if (b.textContent?.trim() === current.correctAnswer.trim()) {
               b.className = 'w-full text-left p-4 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-default text-justify-center';
+              const correctHasHeb = isHebrewText(current.correctAnswer);
+              if (correctHasHeb) {
+                b.classList.add('text-hebrew');
+                b.style.direction = 'rtl';
+              } else {
+                b.style.direction = 'ltr';
+              }
+              b.innerHTML = `<i class="fa-solid fa-circle-check mx-2"></i> ${current.correctAnswer}`;
             }
           });
           showToast('Incorrect answer', true);
@@ -1926,12 +1972,20 @@ function renderQuizQuestion() {
     cardInner.classList.remove('flipped');
 
     // Load word cards texts
-    document.getElementById('fc-question-text')!.textContent = current.promptWord;
-    document.getElementById('fc-question-hint')!.textContent = current.phoneticHint || '';
+    const fcQ = document.getElementById('fc-question-text')!;
+    setQuizElementText(fcQ, current.promptWord);
+
+    const fcH = document.getElementById('fc-question-hint')!;
+    fcH.textContent = current.phoneticHint || '';
     
     // Set answer backs
-    document.getElementById('fc-answer-french')!.textContent = current.correctAnswerFrench || current.correctAnswer;
-    document.getElementById('fc-answer-malagasy')!.textContent = current.correctAnswerMalagasy || '';
+    const fcAF = document.getElementById('fc-answer-french')!;
+    const ansF = current.correctAnswerFrench || current.correctAnswer;
+    setQuizElementText(fcAF, ansF);
+
+    const fcAM = document.getElementById('fc-answer-malagasy')!;
+    const ansM = current.correctAnswerMalagasy || '';
+    setQuizElementText(fcAM, ansM);
   }
 }
 
@@ -2791,14 +2845,14 @@ function toggleTheme() {
     if (themeIcon) {
       themeIcon.className = 'fa-solid fa-moon text-base';
     }
-    showToast('Hazavana mode mavitrika / Light mode active');
+    showToast('Light mode activated');
   } else {
     html.classList.add('dark');
     localStorage.setItem('theme', 'dark');
     if (themeIcon) {
       themeIcon.className = 'fa-solid fa-sun text-base text-amber-400';
     }
-    showToast('Maizina mode mavitrika / Dark mode active');
+    showToast('Dark mode activated');
   }
 }
 
