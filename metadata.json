@@ -1,0 +1,6 @@
+{
+  "name": "Halashon Haivrit Sifriah",
+  "description": "Offline-first Hebrew-French-Malagasy interactive language library with custom font management, responsive design, search, and dynamic quizzes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Halashon Haivrit Sifriah</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#4f46e5" />
+    <!-- FontAwesome for gorgeous icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts for beautiful typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Main Application Stylesheet -->
+    <link rel="stylesheet" href="/src/index.css" />
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
+  <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-150">
+    
+    <!-- Dynamic Font Style Tag (Injected custom fonts will go here) -->
+    <style id="dynamic-fonts"></style>
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm" id="main-header">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 cursor-pointer" id="logo-btn">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+            <i class="fa-solid fa-book-open text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold font-display tracking-tight text-slate-900">הלשון העברית</h1>
+            <p class="text-[10px] text-slate-500 font-medium tracking-wider uppercase">Halashon Haivrit Sifriah</p>
+          </div>
+        </div>
+
+        <!-- Global Real-time Search -->
+        <div class="flex-1 max-w-md relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+          </div>
+          <input type="text" id="global-search" placeholder="Search books, lessons, or Hebrew vocabulary..." class="block w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" />
+          <button id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden hover:text-slate-600">
+            <i class="fa-solid fa-circle-xmark text-slate-400"></i>
+          </button>
+        </div>
+
+        <!-- Utility Buttons -->
+        <div class="flex items-center gap-2">
+          <button id="font-manager-btn" class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-all cursor-pointer" title="Font Manager">
+            <i class="fa-solid fa-font"></i>
+          </button>
+          <button id="settings-btn" class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-all cursor-pointer" title="Settings">
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Navigation Breadcrumbs -->
+    <section class="bg-white border-b border-slate-100" id="breadcrumbs-bar">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-xs font-medium text-slate-500 overflow-x-auto whitespace-nowrap">
+        <span class="hover:text-indigo-600 cursor-pointer transition-colors" id="breadcrumb-library"><i class="fa-solid fa-house mr-1"></i> Library</span>
+        <span class="breadcrumb-sep hidden"><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+        <span class="hover:text-indigo-600 cursor-pointer transition-colors hidden" id="breadcrumb-book">Book Name</span>
+        <span class="breadcrumb-sep hidden"><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+        <span class="hover:text-indigo-600 cursor-pointer transition-colors hidden" id="breadcrumb-niveau">Niveau</span>
+        <span class="breadcrumb-sep hidden"><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+        <span class="text-slate-800 font-semibold hidden" id="breadcrumb-lesson">Lesson</span>
+      </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- ==================== SEARCH RESULTS VIEW ==================== -->
+      <section id="view-search-results" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 font-display">Search Results</h2>
+            <p class="text-sm text-slate-500" id="search-query-desc">Showing results matching "..."</p>
+          </div>
+          <button id="close-search-results-btn" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Previous View
+          </button>
+        </div>
+        
+        <div id="search-results-container" class="space-y-6">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- ==================== LEVEL 1: LIBRARY VIEW ==================== -->
+      <section id="view-level-1" class="space-y-8">
+        
+        <!-- Welcome Hero Card -->
+        <div class="bg-linear-to-r from-indigo-600 to-indigo-800 rounded-2xl text-white p-6 sm:p-8 shadow-xl shadow-indigo-100 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="space-y-2 text-center md:text-left">
+            <h2 class="text-2xl sm:text-3xl font-extrabold font-display leading-tight">Welcome to Halashon Haivrit Sifriah</h2>
+            <p class="text-indigo-100 max-w-md text-sm sm:text-base">An offline-first Hebrew learning center with translation guides in French and Malagasy. Create custom study books, import datasets, and test your skills.</p>
+          </div>
+          <!-- Drag and Drop / File Import Area -->
+          <div class="w-full md:w-auto">
+            <div id="dropzone" class="border-2 border-dashed border-indigo-400/50 hover:border-white rounded-xl p-6 text-center transition-all bg-indigo-500/10 cursor-pointer min-w-[280px]">
+              <input type="file" id="file-uploader" accept=".xlsx,.xls,.csv" class="hidden" />
+              <i class="fa-solid fa-cloud-arrow-up text-3xl mb-2 text-indigo-200"></i>
+              <p class="text-xs font-semibold">Drag & Drop or Click to Import</p>
+              <p class="text-[10px] text-indigo-200 mt-1">Supports Excel (.xlsx) and CSV files</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Title & Add Book -->
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900 font-display">Your Study Books</h3>
+            <p class="text-sm text-slate-500">Select a book to view its academic levels and lessons</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="export-library-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer" title="Export entire library as JSON">
+              <i class="fa-solid fa-file-export text-indigo-600"></i> Export Library (JSON)
+            </button>
+            <button id="add-book-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-indigo-100 transition-all cursor-pointer">
+              <i class="fa-solid fa-plus"></i> Add Book
+            </button>
+          </div>
+        </div>
+
+        <!-- Books List Grid -->
+        <div id="books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated dynamically with books -->
+        </div>
+
+        <!-- No Books Placeholder -->
+        <div id="no-books-placeholder" class="hidden py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white space-y-4">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <i class="fa-solid fa-folder-open text-2xl"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="text-slate-800 font-semibold">No Books Available</h4>
+            <p class="text-sm text-slate-500 max-w-xs mx-auto">Create a custom manual book or upload a spreadsheet file to get started.</p>
+          </div>
+          <button id="placeholder-add-book-btn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-medium text-xs flex items-center gap-2 mx-auto transition-all cursor-pointer">
+            <i class="fa-solid fa-plus"></i> Create First Book
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ==================== LEVEL 2: NIVEAUX VIEW ==================== -->
+      <section id="view-level-2" class="space-y-6 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+              <i class="fa-solid fa-book"></i> Book Contents
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 id="active-book-title" class="text-2xl font-bold text-slate-900 font-display">Book Title</h2>
+              <div class="flex items-center gap-1">
+                <button id="active-book-rename-btn" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs transition-all cursor-pointer" title="Rename Book">
+                  <i class="fa-solid fa-signature"></i>
+                </button>
+                <button id="active-book-delete-btn" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs transition-all cursor-pointer" title="Delete Book">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+            <p id="active-book-meta" class="text-sm text-slate-500">Showing levels and sheets within this library</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="back-to-library-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer">
+              <i class="fa-solid fa-arrow-left"></i> Back to Library
+            </button>
+            <button id="import-book-file-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer" title="Import Excel/CSV into this book">
+              <i class="fa-solid fa-file-import text-indigo-600"></i> Import Excel/CSV
+            </button>
+            <button id="export-book-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer" title="Export this book as JSON">
+              <i class="fa-solid fa-file-export text-indigo-600"></i> Export Book (JSON)
+            </button>
+            <button id="add-niveau-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer">
+              <i class="fa-solid fa-plus"></i> Add Level
+            </button>
+          </div>
+        </div>
+
+        <div id="niveaux-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated dynamically with Niveaux -->
+        </div>
+
+      </section>
+
+      <!-- ==================== LEVEL 3: LESSONS VIEW ==================== -->
+      <section id="view-level-3" class="space-y-6 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+              <i class="fa-solid fa-graduation-cap"></i> Niveau Directory
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 id="active-niveau-title" class="text-2xl font-bold text-slate-900 font-display">Niveau Name</h2>
+              <div class="flex items-center gap-1">
+                <button id="active-niveau-rename-btn" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs transition-all cursor-pointer" title="Rename Level">
+                  <i class="fa-solid fa-signature"></i>
+                </button>
+                <button id="active-niveau-delete-btn" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs transition-all cursor-pointer" title="Delete Level">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+            <p id="active-niveau-meta" class="text-sm text-slate-500">Showing lessons within this tier</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="back-to-niveaux-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer">
+              <i class="fa-solid fa-arrow-left"></i> Back to Levels
+            </button>
+            <button id="import-level-file-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer" title="Import Excel/CSV into this level">
+              <i class="fa-solid fa-file-import text-indigo-600"></i> Import Excel/CSV
+            </button>
+            <button id="export-level-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer" title="Export this level as JSON">
+              <i class="fa-solid fa-file-export text-indigo-600"></i> Export Level (JSON)
+            </button>
+            <button id="add-lesson-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer">
+              <i class="fa-solid fa-plus"></i> Add Lesson
+            </button>
+          </div>
+        </div>
+
+        <div id="lessons-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated dynamically with Lessons -->
+        </div>
+
+        <!-- Empty Lessons Placeholder -->
+        <div id="no-lessons-placeholder" class="hidden py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white space-y-4">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <i class="fa-solid fa-graduation-cap text-2xl"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="text-slate-800 font-semibold">No Lessons in this Level</h4>
+            <p class="text-sm text-slate-500 max-w-xs mx-auto">Create a custom study lesson inside this Niveau to get started.</p>
+          </div>
+          <button id="placeholder-add-lesson-btn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-medium text-xs flex items-center gap-2 mx-auto transition-all cursor-pointer">
+            <i class="fa-solid fa-plus"></i> Create First Lesson
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ==================== LEVEL 4: LESSON PAGE VIEW ==================== -->
+      <section id="view-level-4" class="space-y-6 hidden">
+        
+        <!-- Lesson Header Card -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-100 pb-6">
+            <div class="space-y-2 text-center sm:text-left w-full">
+              <div class="flex items-center justify-between sm:justify-start gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+                <span><i class="fa-solid fa-book-open"></i> Study Module</span>
+                <span id="lesson-header-category" class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-bold">Category</span>
+                <span id="lesson-header-number" class="hidden px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-bold"></span>
+              </div>
+              <h2 id="lesson-header-hebrew" class="text-3xl sm:text-4xl font-bold font-display text-slate-950 text-center text-hebrew" style="direction: rtl;">Hebrew Title</h2>
+              <p id="lesson-header-phonetic" class="text-base font-medium text-slate-600 text-center text-phonetic">Phonetic Title</p>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-50 text-center">
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">French Translation</span>
+                  <span id="lesson-header-french" class="text-sm font-semibold text-slate-800 text-french">French Title</span>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Malagasy Translation</span>
+                  <span id="lesson-header-malagasy" class="text-sm font-semibold text-slate-800 text-malagasy">Malagasy Title</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lesson Operations -->
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <button id="back-to-lessons-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer">
+                <i class="fa-solid fa-arrow-left"></i> Back to Lessons
+              </button>
+              <button id="start-quiz-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-md shadow-amber-100 transition-all cursor-pointer">
+                <i class="fa-solid fa-gamepad animate-pulse"></i> Start Quiz
+              </button>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button id="edit-lesson-details-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm flex items-center gap-2 transition-all cursor-pointer">
+                <i class="fa-solid fa-pen"></i> Edit Lesson Header
+              </button>
+              <button id="add-row-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer">
+                <i class="fa-solid fa-plus"></i> Add Entry Row
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories & Rows Area -->
+        <div id="lesson-content-categories" class="space-y-8">
+          <!-- Populated dynamically with CategoryLesson Subheaders and Content Cards -->
+        </div>
+
+        <!-- Empty Rows Placeholder -->
+        <div id="no-rows-placeholder" class="hidden py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white space-y-4">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <i class="fa-solid fa-table-list text-2xl"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="text-slate-800 font-semibold">No Content Rows Yet</h4>
+            <p class="text-sm text-slate-500 max-w-xs mx-auto">Add vocabularies, sentences, or phrases to this lesson card deck.</p>
+          </div>
+          <button id="placeholder-add-row-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs flex items-center gap-2 mx-auto transition-all cursor-pointer">
+            <i class="fa-solid fa-plus"></i> Create First Entry Row
+          </button>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Footer Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2">
+        <p class="font-semibold text-slate-500">הלשון העברית ספרייה — Halashon Haivrit Sifriah</p>
+        <p>A client-side interactive sandbox. Fully functional offline with persistent IndexedDB & custom fonts.</p>
+      </div>
+    </footer>
+
+
+    <!-- ==================== POP-UP MODALS SYSTEM ==================== -->
+
+    <!-- Backdrop Overlay (Shared by all modals) -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 transition-opacity opacity-0 pointer-events-none duration-150"></div>
+
+
+    <!-- 1. ADD BOOK MODAL -->
+    <div id="modal-add-book" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-book-medical text-indigo-600 mr-2"></i> Create New Book</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="add-book-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-book-name">Book Title *</label>
+          <input type="text" id="new-book-name" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Modern Hebrew Vocabulary" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-book-niveau">Initial Level (Niveau) *</label>
+          <input type="text" id="new-book-niveau" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Beginners A1" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-book-category">Default Category *</label>
+          <input type="text" id="new-book-category" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Phrases, Verbs, Nouns" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Create Book</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 2. ADD NIVEAU MODAL -->
+    <div id="modal-add-niveau" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-folder-plus text-indigo-600 mr-2"></i> Add New Level</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="add-niveau-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-niveau-name">Niveau Name *</label>
+          <input type="text" id="new-niveau-name" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Niveau A2, Level 2" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Add Niveau</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 3. ADD LESSON MODAL -->
+    <div id="modal-add-lesson" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-file-circle-plus text-indigo-600 mr-2"></i> Add New Lesson</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="add-lesson-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-hebrew">Hebrew Title *</label>
+          <input type="text" id="new-lesson-hebrew" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center font-bold text-lg" placeholder="שלום" style="direction: rtl;" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-phonetic">Phonetic Title *</label>
+          <input type="text" id="new-lesson-phonetic" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Shalom" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-french">French Translation *</label>
+          <input type="text" id="new-lesson-french" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Bonjour / Paix" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-malagasy">Malagasy Translation *</label>
+          <input type="text" id="new-lesson-malagasy" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Salama / Fiadanana" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-category">CategoryLesson Name *</label>
+          <input type="text" id="new-lesson-category" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Phrases, Greetings, Vocabularies" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="new-lesson-number">Lesson Number (Optional)</label>
+          <input type="text" id="new-lesson-number" class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. 1" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Add Lesson</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 4. EDIT LESSON HEADER MODAL -->
+    <div id="modal-edit-lesson" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-pen text-indigo-600 mr-2"></i> Edit Lesson Header</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="edit-lesson-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="edit-lesson-hebrew">Hebrew Title *</label>
+          <input type="text" id="edit-lesson-hebrew" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center font-bold text-lg" style="direction: rtl;" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="edit-lesson-phonetic">Phonetic Title *</label>
+          <input type="text" id="edit-lesson-phonetic" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="edit-lesson-french">French Translation *</label>
+          <input type="text" id="edit-lesson-french" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="edit-lesson-malagasy">Malagasy Translation *</label>
+          <input type="text" id="edit-lesson-malagasy" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="edit-lesson-number">Lesson Number (Optional)</label>
+          <input type="text" id="edit-lesson-number" class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. 1" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Save Changes</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 5. ADD/EDIT CONTENT ROW MODAL -->
+    <div id="modal-content-row" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 id="row-modal-title" class="font-bold text-lg text-slate-900 font-display">Add Content Row</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="content-row-form" class="space-y-4">
+        <input type="hidden" id="edit-row-id" />
+        <input type="hidden" id="edit-row-order" />
+        
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="row-hebrew">Hebrew text *</label>
+          <input type="text" id="row-hebrew" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-bold text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-hebrew" placeholder="שלום עליכם" style="direction: rtl;" />
+        </div>
+        
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="row-phonetic">Phonetic *</label>
+          <input type="text" id="row-phonetic" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Shalom Aleichem" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="row-french">French Translation *</label>
+            <input type="text" id="row-french" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Que la paix soit sur vous" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="row-malagasy">Malagasy Translation *</label>
+            <input type="text" id="row-malagasy" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Ho aminareo anie ny fiadanana" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="row-category">CategoryLesson *</label>
+          <input type="text" id="row-category" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Phrases, Vocabularies" />
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" id="row-save-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Save Entry</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 6. FILE COLUMN MAPPING MODAL -->
+    <div id="modal-column-mapping" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 shrink-0">
+        <div>
+          <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-map-location-dot text-indigo-600 mr-2"></i> Import Excel/CSV Header Mapping</h3>
+          <p class="text-xs text-slate-500 mt-1">Select the correct columns from your file that match each target attribute.</p>
+        </div>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Scrollable mapping inputs -->
+      <form id="mapping-form" class="space-y-4 overflow-y-auto pr-2 pb-4 flex-grow">
+        
+        <!-- File and sheet meta -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs flex justify-between gap-4">
+          <div><span class="font-bold text-slate-500">File:</span> <span id="mapping-filename" class="font-semibold text-slate-700">file.xlsx</span></div>
+          <div id="mapping-sheet-container" class="hidden">
+            <span class="font-bold text-slate-500">Sheet:</span>
+            <select id="mapping-sheet-select" class="border border-slate-200 rounded px-1.5 py-0.5 bg-white font-semibold text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Mapping field item rows -->
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">1. Level (Niveau Name) *</span>
+            <select data-field="Level" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">2. Lesson Hebrew Title *</span>
+            <select data-field="HebrewTitle" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">3. Lesson Phonetic Title *</span>
+            <select data-field="PhoneticTitle" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">4. Lesson French Title *</span>
+            <select data-field="FrenchTitle" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">5. Lesson Malagasy Title *</span>
+            <select data-field="MalagasyTitle" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">6. Lesson Number (Optional)</span>
+            <select data-field="LessonNumber" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">7. Row CategoryLesson *</span>
+            <select data-field="CategoryLesson" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-bold text-indigo-700">8. Row Hebrew *</span>
+            <select data-field="Hebrew" class="mapping-dropdown block w-full border border-indigo-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">9. Row Phonetic *</span>
+            <select data-field="Phonetic" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">10. Row French *</span>
+            <select data-field="French" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 items-center border-b border-slate-50 pb-2">
+            <span class="text-xs font-semibold text-slate-700">11. Row Malagasy *</span>
+            <select data-field="Malagasy" class="mapping-dropdown block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:ring-1 focus:ring-indigo-500"></select>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+          <button type="button" id="auto-map-btn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-xs transition-all flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Auto Map Headers
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+            <button type="submit" id="mapping-save-btn" disabled class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Apply Import</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 7. FONT MANAGER MODAL -->
+    <div id="modal-font-manager" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 shrink-0">
+        <div>
+          <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-font text-indigo-600 mr-2"></i> Custom Font Manager</h3>
+          <p class="text-xs text-slate-500 mt-1">Upload and manage custom .ttf/.otf files to style Hebrew letters.</p>
+        </div>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Font Upload Section -->
+      <div class="mb-6 shrink-0 bg-slate-50 border border-slate-100 p-4 rounded-xl space-y-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-circle-arrow-up text-indigo-500 text-lg"></i>
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Install Custom Font</span>
+        </div>
+        <form id="font-upload-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1" for="font-display-name">Font Display Name *</label>
+            <input type="text" id="font-display-name" required class="block w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500" placeholder="e.g. Elegant Hebrew" />
+          </div>
+          <div class="flex gap-2">
+            <div class="flex-grow">
+              <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1" for="font-file-input">Select File (.ttf/.otf) *</label>
+              <input type="file" id="font-file-input" required accept=".ttf,.otf" class="block w-full border border-slate-200 rounded-xl px-2 py-1 text-xs bg-white cursor-pointer" />
+            </div>
+            <button type="submit" class="h-8 py-0 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md self-end flex items-center justify-center cursor-pointer" title="Upload font">
+              <i class="fa-solid fa-upload"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Uploaded Fonts list -->
+      <div class="flex-grow overflow-y-auto pr-2 pb-4 space-y-3">
+        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Installed Font Faces</h4>
+        <div id="fonts-list" class="space-y-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
+        <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Close</button>
+      </div>
+    </div>
+
+
+    <!-- 8. SETTINGS / FONT SIZE CONTROL MODAL -->
+    <div id="modal-settings" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-sliders text-indigo-600 mr-2"></i> Settings & Typography Preferences</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      
+      <div class="space-y-5">
+        
+        <!-- Font Selection for Hebrew -->
+        <div class="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100/40">
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="settings-hebrew-font"><i class="fa-solid fa-spell-check text-indigo-600 mr-1.5"></i> Hebrew Font Face</label>
+          <select id="settings-hebrew-font" class="block w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500">
+            <option value="default">System Default (Inter/Sans)</option>
+            <!-- Injected custom fonts go here -->
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">Changes are applied immediately across all Hebrew cards.</p>
+        </div>
+
+        <!-- Font Size Adjustments -->
+        <div class="space-y-3.5">
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 pb-1.5"><i class="fa-solid fa-text-height mr-1.5"></i> Text Scale Manager</h4>
+          
+          <!-- Interface Font Size -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-700">UI / Interface size</span>
+              <span id="label-size-interface" class="font-mono text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">16px</span>
+            </div>
+            <input type="range" id="size-interface" min="12" max="24" value="16" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+          </div>
+
+          <!-- Hebrew Font Size -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-700">Hebrew text size</span>
+              <span id="label-size-hebrew" class="font-mono text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">24px</span>
+            </div>
+            <input type="range" id="size-hebrew" min="16" max="48" value="24" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+          </div>
+
+          <!-- Phonetic Font Size -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-700">Phonetic size</span>
+              <span id="label-size-phonetic" class="font-mono text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">16px</span>
+            </div>
+            <input type="range" id="size-phonetic" min="12" max="28" value="16" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+          </div>
+
+          <!-- French Font Size -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-700">French translation size</span>
+              <span id="label-size-french" class="font-mono text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">16px</span>
+            </div>
+            <input type="range" id="size-french" min="12" max="28" value="16" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+          </div>
+
+          <!-- Malagasy Font Size -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-700">Malagasy translation size</span>
+              <span id="label-size-malagasy" class="font-mono text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">16px</span>
+            </div>
+            <input type="range" id="size-malagasy" min="12" max="28" value="16" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+          </div>
+
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+          <button type="button" id="reset-settings-btn" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Reset defaults
+          </button>
+          <button type="button" class="modal-close-btn px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Save Settings</button>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- 9. QUIZ MODAL -->
+    <div id="modal-quiz" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150 max-h-[95vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 shrink-0">
+        <div>
+          <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-gamepad text-amber-500 mr-2"></i> Lesson Interactive Practice Quiz</h3>
+          <p id="quiz-subheading" class="text-xs text-slate-500 mt-1">Test your recall of Hebrew terms and translations</p>
+        </div>
+        <button id="quiz-close-btn" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Quiz Setup Panel -->
+      <div id="quiz-setup-panel" class="space-y-6 flex-grow flex flex-col justify-center py-6">
+        <div class="text-center space-y-2 max-w-sm mx-auto mb-4">
+          <div class="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 text-xl mx-auto border border-amber-100 shadow-sm"><i class="fa-solid fa-graduation-cap"></i></div>
+          <h4 class="font-bold text-slate-800 font-display">Configure Your Game Mode</h4>
+          <p class="text-xs text-slate-500">Pick a review direction and testing structure to customize this practice deck session.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto w-full">
+          <!-- Game Type: Multiple Choice -->
+          <button data-quiz-mode="multiple-choice" class="quiz-mode-select-btn p-5 border-2 border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/20 text-left rounded-2xl transition-all cursor-pointer group space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-100 transition-all"><i class="fa-solid fa-list-check"></i></span>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded uppercase">Interactive</span>
+            </div>
+            <h5 class="font-bold text-sm text-slate-800">Multiple Choice Quiz</h5>
+            <p class="text-[11px] text-slate-500">Solve multi-option translations. Best for vocabulary reinforcement and speed drills.</p>
+          </button>
+
+          <!-- Game Type: Flashcards -->
+          <button data-quiz-mode="flashcards" class="quiz-mode-select-btn p-5 border-2 border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/20 text-left rounded-2xl transition-all cursor-pointer group space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-100 transition-all"><i class="fa-solid fa-layer-group"></i></span>
+              <span class="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded uppercase">Self-Guided</span>
+            </div>
+            <h5 class="font-bold text-sm text-slate-800">Recall Flashcards</h5>
+            <p class="text-[11px] text-slate-500">Flip cards to reveal translations and track known words. Best for offline self-study.</p>
+          </button>
+        </div>
+
+        <!-- Translation direction -->
+        <div class="max-w-xs mx-auto w-full space-y-2">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center" for="quiz-direction">Translate From/To Direction</label>
+          <select id="quiz-direction" class="block w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white font-semibold text-slate-700 focus:ring-1 focus:ring-indigo-500">
+            <option value="hebrew-to-translation">Hebrew ➔ French / Malagasy</option>
+            <option value="translation-to-hebrew">French / Malagasy ➔ Hebrew</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quiz Execution Panel (Active gameplay) -->
+      <div id="quiz-active-panel" class="hidden flex-grow overflow-y-auto space-y-6 py-4 flex flex-col justify-between">
+        
+        <!-- Score and Progress Header -->
+        <div class="flex items-center justify-between bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl text-xs shrink-0">
+          <div class="font-semibold text-slate-600">Question <span id="quiz-current-index">1</span> of <span id="quiz-total-questions">10</span></div>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-medium">Score:</span>
+            <span id="quiz-current-score" class="font-mono bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md border border-emerald-100">0</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden shrink-0">
+          <div id="quiz-progress-fill" class="bg-indigo-600 h-2 transition-all duration-300 w-0"></div>
+        </div>
+
+        <!-- Question Card Display Area -->
+        <div class="flex-grow flex items-center justify-center py-6 min-h-[160px]">
+          
+          <!-- Multiple Choice Question card -->
+          <div id="question-card-mc" class="w-full max-w-md mx-auto text-center space-y-4">
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Translate the following word:</span>
+            <div id="quiz-question-word" class="text-3xl font-extrabold font-display py-4 border-y border-slate-100 leading-normal select-all">שלום</div>
+            <p id="quiz-question-subword" class="text-sm font-medium text-slate-500 italic">Shalom</p>
+          </div>
+
+          <!-- Flashcard View -->
+          <div id="question-card-fc" class="hidden w-full max-w-sm mx-auto h-52 bg-slate-50 hover:bg-slate-100/60 rounded-2xl border border-slate-200 cursor-pointer shadow-sm relative [perspective:1000px] select-none group" id="flashcard">
+            <div id="flashcard-inner" class="absolute w-full h-full transition-transform duration-500 [transform-style:preserve-3d] flex items-center justify-center p-6 text-center">
+              
+              <!-- Front of Flashcard -->
+              <div id="flashcard-front" class="absolute inset-0 w-full h-full bg-white border border-slate-100 rounded-2xl flex flex-col items-center justify-center p-6 backface-hidden shadow-xs">
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider absolute top-4">Flashcard (Click to flip)</span>
+                <div id="fc-question-text" class="text-3xl font-extrabold leading-normal">שלום</div>
+                <div id="fc-question-hint" class="text-xs text-slate-400 italic mt-1">Shalom</div>
+              </div>
+
+              <!-- Back of Flashcard -->
+              <div id="flashcard-back" class="absolute inset-0 w-full h-full bg-indigo-50 border border-indigo-100 rounded-2xl flex flex-col items-center justify-center p-6 backface-hidden [transform:rotateY(180deg)] shadow-xs">
+                <span class="text-[10px] text-indigo-500 uppercase font-bold tracking-wider absolute top-4">Answer Translation</span>
+                <div id="fc-answer-french" class="text-lg font-bold text-slate-800">Bonjour</div>
+                <div id="fc-answer-malagasy" class="text-sm text-slate-500 mt-1">Salama</div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Answers / Interactive Inputs -->
+        <div class="shrink-0">
+          
+          <!-- MCQ Option buttons -->
+          <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+            <!-- options generated dynamically -->
+          </div>
+
+          <!-- Flashcard action buttons -->
+          <div id="quiz-flashcard-controls" class="hidden max-w-xs mx-auto flex items-center justify-between gap-4">
+            <button id="fc-know-btn" class="flex-grow py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-circle-check"></i> I Know This
+            </button>
+            <button id="fc-study-btn" class="flex-grow py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-circle-xmark"></i> Still Studying
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Quiz Completion Panel -->
+      <div id="quiz-results-panel" class="hidden flex-grow flex flex-col items-center justify-center py-8 space-y-6">
+        <div class="text-center space-y-3">
+          <div id="quiz-trophy-icon" class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-amber-500 text-3xl mx-auto animate-bounce shadow-md shadow-amber-50 border border-amber-200">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="text-xl font-black text-slate-900 font-display">Lesson Practice Completed!</h4>
+            <p class="text-xs text-slate-500">Fantastic job finishing this vocabulary module quiz.</p>
+          </div>
+        </div>
+
+        <!-- Score Banner -->
+        <div class="bg-slate-50 rounded-2xl px-8 py-5 border border-slate-100 text-center space-y-1.5">
+          <span class="text-[10px] text-slate-400 uppercase font-black tracking-widest block">Final Score</span>
+          <div class="text-3xl font-extrabold text-indigo-600"><span id="quiz-final-score">8</span> / <span id="quiz-final-total">10</span></div>
+          <span id="quiz-final-percentage" class="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">80% Accuracy</span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full max-w-sm justify-center">
+          <button id="quiz-retry-btn" class="flex-grow py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer">
+            <i class="fa-solid fa-rotate-right mr-1.5"></i> Retry Module
+          </button>
+          <button id="quiz-exit-btn" class="flex-grow py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer">
+            <i class="fa-solid fa-house mr-1.5"></i> Finish Session
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- 10. RENAME BOOK MODAL -->
+    <div id="modal-rename-book" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-signature text-indigo-600 mr-2"></i> Renomer le Livre / Rename Book</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="rename-book-form" class="space-y-4">
+        <input type="hidden" id="rename-book-id" />
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="rename-book-input">Book Title *</label>
+          <input type="text" id="rename-book-input" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Save Changes</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 11. DELETE BOOK MODAL -->
+    <div id="modal-delete-book" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-rose-600 font-display"><i class="fa-solid fa-trash-can mr-2"></i> Deletar Livre / Delete Book</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="delete-book-id" />
+        <p class="text-sm text-slate-600">
+          Mety ve raha fafana tanteraka ity boky ity: <span id="delete-book-name-display" class="font-bold text-slate-900">this book</span>? Fafana miaraka aminy avokoa ny level sy lesona rehetra ao anatiny.
+        </p>
+        <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+          <span>Tsy azo averina intsony ity hetsika ity rehefa voafafa! / Irreversible action.</span>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="button" id="confirm-delete-book-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Confirmer la suppression</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 12. RENAME LEVEL MODAL -->
+    <div id="modal-rename-level" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-slate-900 font-display"><i class="fa-solid fa-signature text-indigo-600 mr-2"></i> Hanova ny anaran'ny Level / Rename Level</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="rename-level-form" class="space-y-4">
+        <input type="hidden" id="rename-level-book-id" />
+        <input type="hidden" id="rename-level-old-name" />
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="rename-level-input">Level Display Name *</label>
+          <input type="text" id="rename-level-input" required class="block w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold" />
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Save Changes</button>
+        </div>
+      </form>
+    </div>
+
+
+    <!-- 13. DELETE LEVEL MODAL -->
+    <div id="modal-delete-level" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 z-51 scale-90 opacity-0 pointer-events-none transition-all duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+        <h3 class="font-bold text-lg text-rose-600 font-display"><i class="fa-solid fa-trash-can mr-2"></i> Hamafa Level / Delete Level</h3>
+        <button class="modal-close-btn text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="delete-level-book-id" />
+        <input type="hidden" id="delete-level-old-name" />
+        <p class="text-sm text-slate-600">
+          Mety ve raha fafana tanteraka ity Level ity: <span id="delete-level-name-display" class="font-bold text-slate-900">this level</span> miaraka amin'ny lesona rehetra ao anatiny?
+        </p>
+        <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+          <span>Tsy azo averina intsony ity hetsika ity rehefa voafafa! / Irreversible action.</span>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" class="modal-close-btn px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl font-medium text-xs transition-all cursor-pointer">Cancel</button>
+          <button type="button" id="confirm-delete-level-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium text-xs shadow-md transition-all cursor-pointer">Confirmer la suppression</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Light/Dark Mode Switch (Left) -->
+    <div class="fixed bottom-4 left-4 z-45">
+      <button id="theme-toggle-btn" class="w-10 h-10 rounded-full bg-white text-slate-700 border border-slate-200 flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer" title="Hanova ho maizina na hazavana / Toggle light/dark mode">
+        <i id="theme-icon" class="fa-solid fa-moon text-base"></i>
+      </button>
+    </div>
+
+    <!-- PWA Installation Banner -->
+    <div id="pwa-install-banner" class="hidden fixed bottom-4 right-4 max-w-sm bg-indigo-900 text-white rounded-2xl p-4 shadow-2xl border border-indigo-800 z-45 animate-fade-in flex flex-col gap-3">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-circle-down text-lg"></i>
+        </div>
+        <div class="space-y-0.5">
+          <h5 class="text-xs font-bold font-display">Install Offline Sifriah App?</h5>
+          <p class="text-[10px] text-indigo-200 leading-normal">Add to your home screen to browse files, run tests, and load fonts 100% offline.</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 text-[10px] font-bold">
+        <button id="pwa-decline-btn" class="px-3 py-1.5 hover:bg-indigo-800 rounded-lg text-indigo-200 transition-all cursor-pointer">Dismiss</button>
+        <button id="pwa-install-btn" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg shadow-sm transition-all cursor-pointer">Install Now</button>
+      </div>
+    </div>
+
+    <!-- Application script bundle -->
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
