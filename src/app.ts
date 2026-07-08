@@ -2161,7 +2161,7 @@ function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       // Create sw.js file to support perfect offline service
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker.register('./sw.js')
         .then(reg => {
           console.log('Halashon Sifriah ServiceWorker registered');
         })
