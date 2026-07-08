@@ -1,0 +1,17 @@
+{
+  "short_name": "Halashon Sifriah",
+  "name": "Halashon Haivrit Sifriah",
+  "description": "Offline-first Hebrew-French-Malagasy interactive language library with custom font management, responsive design, search, and dynamic quizzes.",
+  "start_url": "/",
+  "background_color": "#4f46e5",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/book-open.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}
