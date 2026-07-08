@@ -1112,17 +1112,32 @@ async function performSearch(query: string) {
         </button>
       </div>
 
-      <!-- List of matching entries inside -->
-      <div class="space-y-3">
+      <!-- Grid of matching vocabulary cards inside -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
         ${lesGroup.rows.map(row => `
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
-            <div class="text-center sm:text-left space-y-1">
-              <div class="text-lg font-bold text-slate-900 text-hebrew" style="direction: rtl;">${row.hebrew}</div>
-              <div class="font-medium text-slate-500 italic text-phonetic">${row.phonetic}</div>
-            </div>
-            <div class="grid grid-cols-2 gap-3 shrink-0 text-[11px] font-medium text-slate-600">
-              <div class="bg-white px-2.5 py-1 rounded border border-slate-200/50 text-french">FR: <span class="font-semibold text-slate-800">${row.french}</span></div>
-              <div class="bg-white px-2.5 py-1 rounded border border-slate-200/50 text-malagasy">MG: <span class="font-semibold text-slate-800">${row.malagasy}</span></div>
+          <div class="bg-slate-50/60 rounded-2xl border border-slate-200/60 p-5 shadow-xs flex flex-col justify-between hover:bg-slate-50 hover:border-indigo-200 hover:shadow-xs transition-all relative group animate-fade-in text-center">
+            <div class="space-y-4">
+              <!-- Hebrew card title (large, centered, RTL) -->
+              <div class="text-3xl font-bold py-2 font-display text-slate-950 text-hebrew select-all leading-normal" style="direction: rtl;">
+                ${row.hebrew}
+              </div>
+              <!-- Phonetic transcription -->
+              <p class="text-sm font-semibold text-slate-500 text-phonetic">${row.phonetic}</p>
+
+              <!-- Separator -->
+              <div class="w-12 h-0.5 bg-indigo-100/60 mx-auto rounded"></div>
+
+              <!-- French and Malagasy translations -->
+              <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                <div class="bg-white rounded-lg p-2 border border-slate-100/50">
+                  <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5 text-center">French</span>
+                  <span class="font-medium text-slate-700 text-french block text-center">${row.french}</span>
+                </div>
+                <div class="bg-white rounded-lg p-2 border border-slate-100/50">
+                  <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-0.5 text-center">Malagasy</span>
+                  <span class="font-medium text-slate-700 text-malagasy block text-center">${row.malagasy}</span>
+                </div>
+              </div>
             </div>
           </div>
         `).join('')}
